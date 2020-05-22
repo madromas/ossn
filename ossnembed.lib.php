@@ -27,6 +27,8 @@
  * metacafe
  * dailymotion
  * hulu
+ * bitchute
+ * cinnamon
  */
 
 
@@ -224,6 +226,81 @@ function ossn_embed_youtube_shortener_parse_url($url) {
 	$embed_object .= ossn_embed_add_object('youtube', $videourl, $guid, $videowidth, $videoheight);
 
 	return $embed_object;
+}
+
+/**
+ * main vimeo interface
+ *
+ * @param string $url
+ * @param integer $guid unique identifier of the widget
+ * @param integer $videowidth  optional override of admin set width
+ * @return string css style, video div, and flash <object>
+ */
+function ossn_embed_vimeo_handler($url, $guid, $videowidth) {
+	// this extracts the core part of the url needed for embeding
+	$videourl = ossn_embed_vimeo_parse_url($url);
+	if (!isset($videourl)) {
+		return false;
+	}
+
+	// aspect ratio changes based on video - need to investigate
+	ossn_embed_calc_size($videowidth, $videoheight, 400/300, 0);
+
+	$embed_object = ossn_embed_add_css($guid, $videowidth, $videoheight);
+
+	$embed_object .= ossn_embed_add_object('vimeo', $videourl, $guid, $videowidth, $videoheight);
+
+	return $embed_object;
+}
+
+/**
+ * parse vimeo url
+ *
+ * @param string $url
+ * @return string hash
+ */
+function ossn_embed_vimeo_parse_url($url) {
+	// separate parsing embed url
+	if (strpos($url, 'object') != false) {
+		return ossn_embed_vimeo_parse_embed($url);
+	}
+
+	if (strpos($url, 'groups') != false) {
+		if (!preg_match('/(https?:\/\/)(www\.)?(vimeo\.com\/groups)(.*)(\/videos\/)([0-9]*)/', $url, $matches)) {
+			//echo "malformed vimeo group url";
+			return;
+		}
+		return $matches[6];
+	} 
+	
+	if (preg_match('/(https:\/\/)(www\.)?(vimeo.com\/)([0-9]*)/', $url, $matches)) {
+			// this is the "share" link suggested by vimeo 
+			return $matches[4];
+	}
+		
+	if (preg_match('/(https:\/\/)(player\.)?(vimeo.com\/video\/)([0-9]*)/', $url, $matches)) {
+			// that's the "embed" link suggested by vimeo
+			return $matches[4];
+	}
+
+}
+
+/**
+ * parse vimeo embed code
+ *
+ * @param string $url
+ * @return string hash
+ */
+function ossn_embed_vimeo_parse_embed($url) {
+	if (!preg_match('/(value="https?:\/\/vimeo\.com\/moogaloop\.swf\?clip_id=)([0-9-]*)(&)(.*" \/)/', $url, $matches)) {
+		//echo "malformed embed vimeo url";
+		return;
+	}
+
+	$hash   = $matches[2];
+	//echo $hash;
+
+	return $hash;
 }
 
 /**
