@@ -29,6 +29,7 @@
  * hulu
  * bitchute
  * cinnamon
+ * tiktok
  */
 
 
@@ -56,6 +57,8 @@ function ossn_embed_create_embed_object($url, $guid, $videowidth=0) {
 	} else if (strpos($url, 'vimeo.com') != false) {
 		return ossn_embed_vimeo_handler($url, $guid, $videowidth);
 	
+	} else if (strpos($url, 'tiktok.com') != false) {
+		return ossn_embed_tiktok_handler($url, $guid, $videowidth);
 	} else if (strpos($url, 'bitchute.com') != false) {
 		return ossn_embed_bitchute_handler($url, $guid, $videowidth);	
 	} else if (strpos($url, 'cinnamon.video') != false) {
@@ -116,10 +119,13 @@ function ossn_embed_add_object($type, $url, $guid, $width, $height) {
 			break;
 		
 		case 'bitchute':
-			$videodiv .= "<iframe src=\"https://www.bitchute.com/embed/{$url}\" allowfullscreen></iframe>";
+			$videodiv .= "<iframe src=\"https://www.bitchute.com/embed/{$url}\" width=\"$width\" height=\"$height\" allowfullscreen></iframe>";
+			break;	
+		case 'tiktok':
+			$videodiv .= "<iframe src=\"https://www.tiktok.com/embed/{$url}\" width=\"$width\" height=\"$height\" allowfullscreen></iframe>";
 			break;	
 		case 'cinnamon':
-			$videodiv .= "<iframe src=\"https://www.cinnamon.video/embed?v={$url}\" scrolling=\"no\" allowfullscreen></iframe>";
+			$videodiv .= "<iframe src=\"https://www.cinnamon.video/embed?v={$url}\" scrolling=\"no\" width=\"$width\" height=\"$height\" allowfullscreen></iframe>";
 			break;	
 		
 		case 'metacafe':
@@ -341,6 +347,49 @@ function ossn_embed_bitchute_parse_url($url) {
 	}
 	if (preg_match('/(https:\/\/)(www\.)?(bitchute.com\/video\/)(.*)/', $url, $matches)) {
 			// that's the "embed" link suggested by bitchete
+			return $matches[4];
+	}
+
+}
+
+/**
+ * main tiktok interface
+ *
+ * @param string $url
+ * @param integer $guid unique identifier of the widget
+ * @param integer $videowidth  optional override of admin set width
+ * @return string css style, video div, and flash <object>
+ */
+function ossn_embed_tiktok_handler($url, $guid, $videowidth) {
+	// this extracts the core part of the url needed for embeding
+	$videourl = ossn_embed_tiktok_parse_url($url);
+	if (!isset($videourl)) {
+		return false;
+	}
+
+	// aspect ratio changes based on video - need to investigate
+	ossn_embed_calc_size($videowidth, $videoheight, 400/300, 0);
+
+	$embed_object = ossn_embed_add_css($guid, $videowidth, $videoheight);
+
+	$embed_object .= ossn_embed_add_object('tiktok', $videourl, $guid, $videowidth, $videoheight);
+
+	return $embed_object;
+}
+
+/**
+ * parse tiktok url
+ *
+ * @param string $url
+ * @return string hash
+ */
+function ossn_embed_tiktok_parse_url($url) {
+	// separate parsing embed url
+	if (strpos($url, 'object') != false) {
+		return ossn_embed_tiktok_parse_embed($url);
+	}
+	if (preg_match('/(https:\/\/)(www\.)?(tiktok.com\/embed\/)(.*)/', $url, $matches)) {
+			// that's the "embed" link suggested by shitty website
 			return $matches[4];
 	}
 
